@@ -1,0 +1,129 @@
+ //
+//  PlaceholderServices.swift
+//  JsonGaurag
+//
+//  Created by Yogesh Patel on 11/17/19.
+//  Copyright © 2019 Yogesh Patel. All rights reserved.
+//
+
+import Foundation
+import Moya
+
+enum PlaceHolderService {
+    case placeholder
+    case placeholderPost(params: [String: Any])
+    case imageUpload(photo: Data)
+}
+
+extension PlaceHolderService: TargetType{
+    
+    var baseURL: URL {
+        switch self {
+        case .imageUpload:
+            return URL(string: "https://api.dev.bl3dgrr6yknbx3r3mn.identify-me.com/api/v1/user")!
+        default:
+            return URL(string: "https://jsonplaceholder.typicode.com")!
+        }
+        
+    }
+    
+    var path: String {
+        switch self {
+        case .imageUpload:
+            return "upload-profile-pic"
+        default:
+            return "posts"
+        }
+        
+    }
+    
+    var method: Moya.Method {
+        switch self {
+        case .placeholder: return .get
+        case .placeholderPost: return .post
+        case .imageUpload: return .post
+        }
+    }
+    
+    var sampleData: Data {
+        Data()
+    }
+    
+    var task: Task {
+        switch self {
+        case .placeholder:
+            return .requestPlain
+        case .placeholderPost(let params):
+            return .requestParameters(parameters: params, encoding: JSONEncoding.default)
+        case .imageUpload(let photo):
+            let formData = MultipartFormData(provider: .data(photo), name: "image", fileName: "testImage.jpg", mimeType: "image/jpeg")
+            let name = (MultipartFormData(provider: .data("Rising".data(using: .utf8)!), name: "name"))
+            return .uploadMultipart([formData, name])
+        }
+    }
+    
+    var headers: [String : String]? {
+//        var params: [String:Any]
+//        params["User"] = ["name": "21", "Email": "adad"]
+        return ["Content-Type": "application/json", "x-auth-token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MTEyLCJlbWFpbCI6ImdybmdAZ3JyLmxhIiwibmFtZSI6IkdhdXJhbmcgdnlhcyIsInVzZXJDb2RlIjoiMVdWVlJQWTIiLCJpc1Byb2ZpbGVTZXQiOnRydWUsImlzQWN0aXZlIjp0cnVlLCJjb3VudHJ5Q29kZSI6Iis5MSIsInVzZXJVdWlkIjoiNjA1YWQzNDAtMDhmYi0xMWVhLWEzNTMtZDMwNWQ0Y2E2Y2Q5IiwiaWF0IjoxNTczOTY4NjMzfQ.c7itPh5firHuQxyTyLNbiuie02cYqQgK5o612OOP0lg"]
+    }
+}
+
+
+class ViewController: UIViewController {
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+//        getData()
+       // getPostRequest()
+        uploadImage()
+        // Do any additional setup after loading the view.
+    }
+
+    private func getData(){
+        let provider = MoyaProvider<PlaceHolderService>()
+        
+        provider.request(.placeholder) { (result) in
+            switch result{
+            case .success(let response):
+                print(String.init(data: response.data, encoding: .utf8))
+                break
+            case .failure(let error):
+                print(error)
+                
+            }
+        }
+    }
+    
+    private func getPostRequest(){
+        let params: [String: Any] = ["userID": 1, "title": "my title", "body": "my body"]
+        
+        let provider = MoyaProvider<PlaceHolderService>()
+        
+        provider.request(.placeholderPost(params: params)) { (result) in
+            switch result{
+            case .success(let response):
+                print(String.init(data: response.data, encoding: .utf8))
+                    break
+                case .failure(let error):
+                    print(error)
+                    
+                }
+            }
+    }
+    
+    private func uploadImage(){
+         let provider = MoyaProvider<PlaceHolderService>()
+        let data = #imageLiteral(resourceName: "p9.png").jpegData(compressionQuality: 1)!
+        provider.request(.imageUpload(photo: data)) { (result) in
+            switch result{
+            case .success(let response):
+                print(String.init(data: response.data, encoding: .utf8))
+                    break
+                case .failure(let error):
+                    print(error)
+                    
+                }
+        }
+     }
+ }
